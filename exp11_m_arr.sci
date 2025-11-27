@@ -1,0 +1,73 @@
+clear;clc;close;
+M=16;N=1000;SNR_dB=15;
+data=floor(rand(1,N)*M);
+function constellation=generate_mqam(M)
+    L=sqrt(M);
+    if L~=floor(L) then error('M must be a perfect square for QAM');end
+    indices=-(L-1):2:(L-1);
+    [I,Q]=meshgrid(indices,indices);
+    constellation=I(:)+%i*Q(:);
+    avg_power=mean(abs(constellation).^2);
+    constellation=constellation/sqrt(avg_power);
+endfunction
+constellation=generate_mqam(M);
+tx_symbols=constellation(data+1);
+tx_symbols=tx_symbols(:)';
+signal_power=mean(abs(tx_symbols).^2);
+noise_power=signal_power/(10^(SNR_dB/10));
+noise=sqrt(noise_power/2)*(rand(1,N,'normal')+%i*rand(1,N,'normal'));
+rx_symbols=tx_symbols+noise;
+scf(1);clf;
+subplot(1,2,1);
+plot(real(constellation),imag(constellation),'ro','MarkerSize',10,'LineWidth',2);
+xgrid();
+xlabel('In-Phase (I)','fontsize',3);
+ylabel('Quadrature (Q)','fontsize',3);
+title(msprintf('%d-QAM Constellation (Without Noise)',M),'fontsize',3);
+a=gca();a.data_bounds=[-2,-2;2,2];a.isoview="on";
+
+subplot(1,2,2);
+plot(real(rx_symbols),imag(rx_symbols),'b.','MarkerSize',3);
+plot(real(constellation),imag(constellation),'ro','MarkerSize',10,'LineWidth',2);
+xgrid();
+xlabel('In-Phase (I)','fontsize',3);
+ylabel('Quadrature (Q)','fontsize',3);
+title(msprintf('%d-QAM with AWGN (SNR = %d dB)',M,SNR_dB),'fontsize',3);
+legend(['Received symbols';'Ideal constellation'],'in_upper_left');
+a=gca();a.data_bounds=[-2,-2;2,2];a.isoview="on";
+disp('=== Simulation Parameters ===');
+disp(msprintf('Modulation: %d-QAM',M));
+disp(msprintf('Number of symbols: %d',N));
+disp(msprintf('SNR: %d dB',SNR_dB));
+disp(msprintf('Signal Power: %.4f',signal_power));
+disp(msprintf('Noise Power: %.4f',noise_power));
+scf(2);clf;
+modulations=[4,16,64];
+SNR_values=[10,15,20];
+for idx=1:3
+    M_plot=modulations(idx);
+    SNR_plot=SNR_values(idx);
+    const_plot=generate_mqam(M_plot);
+    data_plot=floor(rand(1,500)*M_plot);
+    tx_plot=const_plot(data_plot+1);
+    tx_plot=tx_plot(:)';
+    sig_pow=mean(abs(tx_plot).^2);
+    noi_pow=sig_pow/(10^(SNR_plot/10));
+    noise_plot=sqrt(noi_pow/2)*(rand(1,500,'normal')+%i*rand(1,500,'normal'));
+    rx_plot=tx_plot+noise_plot;
+    subplot(2,3,idx);
+    plot(real(const_plot),imag(const_plot),'ro','MarkerSize',8,'LineWidth',2);
+    xgrid();
+    title(msprintf('%d-QAM (No Noise)',M_plot),'fontsize',2);
+    xlabel('I','fontsize',2);
+    ylabel('Q','fontsize',2);
+    a=gca();a.isoview="on";
+    subplot(2,3,idx+3);
+    plot(real(rx_plot),imag(rx_plot),'b.','MarkerSize',2);
+    plot(real(const_plot),imag(const_plot),'ro','MarkerSize',8,'LineWidth',2);
+    xgrid();
+    title(msprintf('%d-QAM (SNR=%ddB)',M_plot,SNR_plot),'fontsize',2);
+    xlabel('I','fontsize',2);
+    ylabel('Q','fontsize',2);
+    a=gca();a.isoview="on";
+end
