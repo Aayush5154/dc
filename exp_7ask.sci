@@ -22,21 +22,23 @@ carrier = sin(2 * %pi * fc * t);
 
 ask = baseband .* carrier;
 
-rectified = abs(ask);
-window = ones(1, samples) / samples;
-demod = conv(rectified, window, "same");
+demod = zeros(1, N);
+idx = 1;
+for i = 1:N
+    segment = ask(idx:idx+samples-1);
+    demod(i) = sum(abs(segment)) / samples;
+    idx = idx + samples;
+end
 
 received_bits = zeros(1, N);
 threshold = 0.4;
 
-idx = samples/2;
 for i = 1:N
-    if demod(idx) > threshold then
+    if demod(i) > threshold then
         received_bits(i) = 1;
     else
         received_bits(i) = 0;
     end
-    idx = idx + samples;
 end
 
 disp("Sent Bits:    " + string(bits));
@@ -45,19 +47,19 @@ disp("Received Bits:" + string(received_bits));
 subplot(4,1,1);
 plot(t, baseband);
 title("Baseband NRZ Signal");
-xlabel("Time"); ylabel("Amplitude"); xgrid();
+xlabel("Time"); ylabel("Amp"); xgrid();
 
 subplot(4,1,2);
 plot(t, carrier);
 title("Carrier Signal");
-xlabel("Time"); ylabel("Amplitude"); xgrid();
+xlabel("Time"); ylabel("Amp"); xgrid();
 
 subplot(4,1,3);
 plot(t, ask);
 title("ASK Modulated Signal");
-xlabel("Time"); ylabel("Amplitude"); xgrid();
+xlabel("Time"); ylabel("Amp"); xgrid();
 
 subplot(4,1,4);
-plot(t, demod);
-title("Demodulated Envelope");
-xlabel("Time"); ylabel("Amplitude"); xgrid();
+plot(demod);
+title("Demodulated Output");
+xlabel("Bit index"); ylabel("Value"); xgrid();
