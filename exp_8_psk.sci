@@ -3,12 +3,12 @@ clc; clear; close;
 bits = [1 0 1 1 0 0 1];
 N = length(bits);
 
-Fs = 1000;
-Tb = 1;
+Fs = 5000;          // higher sampling for smooth waveform
+Tb = 0.05;          // shorter bit time
 samples = Fs * Tb;
 
 t = 0:1/Fs:(N*Tb - 1/Fs);
-fc = 50;
+fc = 500;           // higher carrier frequency
 
 baseband = zeros(1, N*samples);
 idx = 1;
@@ -22,11 +22,14 @@ bpsk = zeros(1, N*samples);
 idx = 1;
 
 for i = 1:N
+    carrier = sin(2*%pi*fc*t(idx:idx+samples-1));
+
     if bits(i) == 1 then
-        bpsk(idx:idx+samples-1) = sin(2*%pi*fc*t(idx:idx+samples-1));
+        bpsk(idx:idx+samples-1) = carrier;
     else
-        bpsk(idx:idx+samples-1) = -sin(2*%pi*fc*t(idx:idx+samples-1));
+        bpsk(idx:idx+samples-1) = -carrier;
     end
+
     idx = idx + samples;
 end
 
@@ -36,9 +39,10 @@ idx = 1;
 for i = 1:N
     segment = bpsk(idx:idx+samples-1);
     ref     = sin(2*%pi*fc*t(idx:idx+samples-1));
+
     prod = segment .* ref;
 
-    if prod(1) > 0 then
+    if sum(prod) > 0 then
         received(i) = 1;
     else
         received(i) = 0;
@@ -52,15 +56,12 @@ disp("Received Bits:  " + string(received));
 
 subplot(3,1,1);
 plot(t, baseband);
-title("Baseband NRZ Signal");
-xlabel("Time"); ylabel("Amplitude"); xgrid();
+title("Baseband NRZ Signal"); xgrid();
 
 subplot(3,1,2);
 plot(t, bpsk);
-title("BPSK Modulated Signal");
-xlabel("Time"); ylabel("Amplitude"); xgrid();
+title("BPSK Modulated Signal (Clear)"); xgrid();
 
 subplot(3,1,3);
-plot(1:N, received);
-title("Recovered Bits");
-xlabel("Bit Index"); ylabel("Bit Value"); xgrid();
+plot(1:N, received, '-o');
+title("Recovered Bits"); xgrid();
