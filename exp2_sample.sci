@@ -1,63 +1,76 @@
-// chatgpt chat -> https://chatgpt.com/share/6918dc57-c88c-8003-b08c-cfd06536c079
-clc;
-clear;
-close;
+clc; clear; close;
 
-// --------------------------------------
-// PARAMETERS
-// --------------------------------------
-Fs = 1000;                 // High simulation frequency
-t = 0:1/Fs:0.01;           // Time vector (10 ms) and 1/fs is 1ms 
-fm = 50;                   // Message frequency
+///////////////////////////////////////////////////////////////////////////////
+// PART 1: NATURAL SAMPLING
+///////////////////////////////////////////////////////////////////////////////
 
-// Continuous message signal
-m = sin(2*%pi*fm*t);
-//  yaha tak ka part sine wave create karega bas 
+f_msg1 = 50;              // Message freq (natural sampling)
+f_samp1 = 1000;           // Sampling freq
+fs1 = 10000;              // Simulation sampling freq
+t1 = 0:1/fs1:0.1;         // Time duration
 
-// --------------------------------------
-// IMPULSE SAMPLING
-// --------------------------------------
-Fsamp = 200;               // Sampling frequency
-Ts = 1/Fsamp;              // Sampling period
-n = 0:Ts:0.01;             // Sampling instants Ts = 5ms 
-impulse_sample = sin(2*%pi*fm*n); //value of the signal at each sampling instant (like impulses)
+msg1  = sin(2*%pi*f_msg1*t1);        // Message 
+sine_samp1 = sin(2*%pi*f_samp1*t1);  // Sampling sinusoid
+samp1 = double(sine_samp1 > 0);      // Convert to square wave
+sampled1 = msg1 .* samp1;           // Natural Sampling
 
-// --------------------------------------
-// NATURAL SAMPLING
-// --------------------------------------
-pulse_width = 0.3*Ts;      // 30% duty cycle
-p = zeros(t);              // Pulse train
+///////////////////////////////////////////////////////////////////////////////
+// PART 2: IMPULSE SAMPLING
+///////////////////////////////////////////////////////////////////////////////
 
-for i = 1:length(t)
-    if modulo(t(i), Ts) <= pulse_width then
-        p(i) = 1;
-    else
-        p(i) = 0;
-    end
-end // creating the 30% duty cycle pulse 
+f_msg2 = 1;           // Message freq (impulse sampling)
+f_samp2 = 50;         // Sampling pulses
+fs2 = 1000;           
+t2 = 0:1/fs2:1;       
 
-natural_sample = m .* p;
+msg2 = sin(2*%pi*f_msg2*t2);
 
-// --------------------------------------
-// PLOTTING
-// --------------------------------------
+// Impulse train generator
+imp_samp2 = zeros(t2);
+Ts2 = round(fs2/f_samp2);
 
-subplot(3,1,1);
-plot(t, m);
-title("Message Signal (Continuous)");
-xlabel("Time (s)");
-ylabel("Amplitude");
+for i = 1:Ts2:length(t2)
+    imp_samp2(i) = 1;
+end
 
-// -------- Impulse sampling using plot2d3 --------
-subplot(3,1,2);
-plot2d3(n, impulse_sample);     // Equivalent to MATLAB stem()
-title("Impulse Sampling");
-xlabel("Time (s)");
-ylabel("Amplitude");
+sampled2 = msg2 .* imp_samp2;
 
-// -------- Natural sampling --------
-subplot(3,1,3);
-plot(t, natural_sample);
-title("Natural Sampling");
-xlabel("Time (s)");
-ylabel("Amplitude");
+///////////////////////////////////////////////////////////////////////////////
+// PLOTTING BOTH METHODS
+///////////////////////////////////////////////////////////////////////////////
+
+subplot(3,2,1)
+plot(t1, msg1, 'Linewidth', 2);
+title("Natural Sampling: Message"); 
+xlabel("Time"); ylabel("Amp");
+a=gca(); a.font_size=4;
+
+subplot(3,2,2)
+plot(t2, msg2, 'Linewidth', 2);
+title("Impulse Sampling: Message");
+xlabel("Time"); ylabel("Amp");
+a=gca(); a.font_size=4;
+
+subplot(3,2,3)
+plot(t1, samp1, 'Linewidth', 2);
+title("Natural Sampling: Sampling Train");
+xlabel("Time"); ylabel("Amp");
+a=gca(); a.font_size=4;
+
+subplot(3,2,4)
+plot(t2, imp_samp2, 'Linewidth', 2);
+title("Impulse Sampling: Impulse Train");
+xlabel("Time"); ylabel("Amp");
+a=gca(); a.font_size=4;
+
+subplot(3,2,5)
+plot(t1, sampled1, 'Linewidth', 2);
+title("Natural Sampled Signal");
+xlabel("Time"); ylabel("Amp");
+a=gca(); a.font_size=4;
+
+subplot(3,2,6)
+plot(t2, sampled2, 'Linewidth', 2);
+title("Impulse Sampled Signal");
+xlabel("Time"); ylabel("Amp");
+a=gca(); a.font_size=4;
