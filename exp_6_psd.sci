@@ -25,7 +25,6 @@ ylabel("PSD");
 xgrid();
 
 // DC spike at f = 0
-hold("on");
-delta_height = max(PSD)*1.2;
-plot([0 0], [0 delta_height], "r--");
-hold("off");
+delta_height = max(PSD) * 1.2;
+h = xpoly([0 0], [0 delta_height], "lines");
+h.foreground = 5;   // red vertical spike
