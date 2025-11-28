@@ -1,36 +1,43 @@
 clc; clear; close;
 
-bits = [1 0 1 1 0 0 1];      // Input binary bits
+bits = [1 0 1 1 0 0 1];
 N = length(bits);
 
-samples = 200;               // Samples per bit (higher = smoother)
-Tb = 1;                      // bit duration = 1s (for simplicity)
-Fs = samples / Tb;           // sampling frequency
+samples = 200;
+Tb = 1;
+Fs = samples / Tb;
 total_samples = N * samples;
 
-t = 0:1/Fs:(total_samples-1)/Fs;  // Time vector
+t = 0:1/Fs:(total_samples-1)/Fs;
 
 baseband = zeros(1, total_samples);
-k = 1;
+idx = 1;
 for i = 1:N
-    baseband(k:k+samples-1) = bits(i);
-    k = k + samples;
+    baseband(idx:idx+samples-1) = bits(i);
+    idx = idx + samples;
 end
 
-fc = 10;                                     // carrier frequency (Hz)
+fc = 10;
 carrier = sin(2 * %pi * fc * t);
 
+ask = baseband .* carrier;
 
-A1 = 1;                                      // Amplitude for bit 1
-A0 = 0;                                      // Amplitude for bit 0
-ask = (A1 * baseband + A0 * (1-baseband)) .* carrier;
+rectified = abs(ask);
+window = ones(1, samples) / samples;
+demod = conv(rectified, window, "same");
 
-rectified = abs(ask);                        // full-wave rectifier
-window = ones(1, samples) / samples;         // Ideal LPF
-demod = conv(rectified, window, "same");     // envelope detection
+received_bits = zeros(1, N);
+threshold = 0.4;
 
-sample_points = samples/2 : samples : total_samples;   // mid-bit sampling
-received_bits = demod(sample_points) > 0.4;             // threshold detect
+idx = samples/2;
+for i = 1:N
+    if demod(idx) > threshold then
+        received_bits(i) = 1;
+    else
+        received_bits(i) = 0;
+    end
+    idx = idx + samples;
+end
 
 disp("Sent Bits:    " + string(bits));
 disp("Received Bits:" + string(received_bits));
